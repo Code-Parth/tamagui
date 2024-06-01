@@ -3,6 +3,7 @@ import { useLayoutEffect } from 'react'
 
 import { THEME_CLASSNAME_PREFIX } from '../constants/constants'
 import { Theme } from './Theme'
+import React from 'react'
 
 export type ThemeProviderProps = {
   className?: string
