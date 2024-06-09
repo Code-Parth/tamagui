@@ -9,6 +9,8 @@ import { MDXProvider } from '~/features/docs/MDXProvider'
 import { MDXTabs } from '~/features/docs/MDXTabs'
 import { listeners } from '~/features/docs/docsTint'
 import { components } from '~/features/mdx/MDXComponents'
+import { HeadInfo } from '~/components/HeadInfo'
+import { getOgUrl } from '~/features/site/getOgUrl'
 
 export async function generateStaticParams() {
   const frontmatters = getAllFrontmatter('data/docs/components')
@@ -21,12 +23,12 @@ export async function generateStaticParams() {
   const latestVersionPaths = paths.map((path) => {
     const parts = path.subpath.split('/')
     const withoutVersion = parts.slice(0, parts.length - 1)
-    return {
-      subpath: withoutVersion.join('/'),
-    }
+    return withoutVersion.join('/')
   })
 
-  const allPaths = [...paths, ...latestVersionPaths]
+  const deduped = [...new Set(latestVersionPaths)].map((subpath) => ({ subpath }))
+
+  const allPaths = [...paths, ...deduped]
 
   return allPaths
 }
@@ -77,8 +79,8 @@ export default function DocComponentsPage() {
 
   return (
     <>
-      {/* <NextSeo
-        title={`${frontmatter.title} — Tamagui — style library, design system, and UI kit for React (Native and web)`}
+      <HeadInfo
+        title={`${frontmatter.title} | Tamagui — style library and UI kit for React`}
         description={frontmatter.description}
         openGraph={{
           images: [
@@ -95,7 +97,7 @@ export default function DocComponentsPage() {
             },
           ],
         }}
-      /> */}
+      />
       {/* {frontmatter.version !== frontmatter.versions?.[0] && (
         <OldVersionNote
           name={frontmatter.title}

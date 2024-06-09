@@ -10,6 +10,7 @@ import React, {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -23,6 +24,7 @@ import { didGetVariableValue, setDidGetVariableValue } from './createVariable'
 import {
   defaultComponentState,
   defaultComponentStateMounted,
+  defaultComponentStateShouldEnter,
 } from './defaultComponentState'
 import {
   createShallowSetState,
@@ -67,6 +69,7 @@ import type {
 import { Slot } from './views/Slot'
 import { getThemedChildren } from './views/Theme'
 import { ThemeDebug } from './views/ThemeDebug'
+import { useDidHydrateOnce } from './hooks/useDidHydrateOnce'
 
 /**
  * All things that need one-time setup after createTamagui is called
@@ -194,8 +197,19 @@ export const useComponentState = (
 
   const hasEnterState = hasEnterStyle || isEntering
 
+  const didHydrateOnce = useDidHydrateOnce()
+
   const initialState =
-    hasEnterState || hasRNAnimation ? defaultComponentState : defaultComponentStateMounted
+    hasEnterState || (!didHydrateOnce && hasRNAnimation)
+      ? // on the very first render we switch all spring animation drivers to css rendering
+        // this is because we need to use css variables, which they don't support to do proper SSR
+        // without flickers of the wrong colors.
+        // but once we do that initial hydration and we are in client side rendering mode,
+        // we can avoid the extra re-render on mount
+        isWeb && !didHydrateOnce
+        ? defaultComponentState
+        : defaultComponentStateShouldEnter
+      : defaultComponentStateMounted
 
   // will be nice to deprecate half of these:
   const disabled = isDisabled(props)
@@ -214,7 +228,7 @@ export const useComponentState = (
 
   // only web server + initial client render run this when not hydrated:
   let isAnimated = willBeAnimated
-  if (hasRNAnimation && !staticConfig.isHOC && state.unmounted === true) {
+  if (isWeb && hasRNAnimation && !staticConfig.isHOC && state.unmounted === true) {
     isAnimated = false
     curStateRef.willHydrate = true
   }
@@ -807,12 +821,10 @@ export function createComponent<
     // once you set animation prop don't remove it, you can set to undefined/false
     // reason is animations are heavy - no way around it, and must be run inline here (🙅 loading as a sub-component)
     let animationStyles: any
-    if (
-      // if it supports css vars we run it on server too to get matching initial style
-      (supportsCSSVars ? willBeAnimatedClient : willBeAnimated) &&
-      useAnimations &&
-      !isHOC
-    ) {
+    const shouldUseAnimation = // if it supports css vars we run it on server too to get matching initial style
+      (supportsCSSVars ? willBeAnimatedClient : willBeAnimated) && useAnimations && !isHOC
+
+    if (shouldUseAnimation) {
       // HOOK 16... (depends on driver) (-1 if no animation, -1 if disableSSR, -1 if no context, -1 if production)
       const animations = useAnimations({
         props: propsWithAnimation,
@@ -909,7 +921,7 @@ export function createComponent<
         return
       }
 
-      if (state.unmounted === true) {
+      if (state.unmounted === true && hasEnterStyle) {
         setStateShallow({ unmounted: 'should-enter' })
         return
       }

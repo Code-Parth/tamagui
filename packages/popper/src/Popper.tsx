@@ -1,5 +1,4 @@
 // adapted from radix-ui popper
-
 import { useComposedRefs } from '@tamagui/compose-refs'
 import { isAndroid, isWeb, useIsomorphicLayoutEffect } from '@tamagui/constants'
 import type { ScopedProps, SizeTokens, StackProps } from '@tamagui/core'
@@ -446,14 +445,17 @@ export const PopperArrow = PopperArrowFrame.styleable<PopperArrowExtraProps>(
     const { offset, size: sizeProp, borderWidth = 0, ...arrowProps } = props
 
     const context = usePopperContext(__scopePopper)
-    const sizeVal = sizeProp ?? context.size
-    const sizeValResolved = getVariableValue(
-      getSpace(sizeVal, {
-        shift: -2,
-        bounds: [2],
-      })
-    )
-    const size = Math.max(0, +sizeValResolved)
+    const sizeVal =
+      typeof sizeProp === 'number'
+        ? sizeProp
+        : getVariableValue(
+            getSpace(sizeProp ?? context.size, {
+              shift: -2,
+              bounds: [2],
+            })
+          )
+
+    const size = Math.max(0, +sizeVal)
 
     const { placement } = context
     const refs = useComposedRefs(context.arrowRef, forwardedRef)

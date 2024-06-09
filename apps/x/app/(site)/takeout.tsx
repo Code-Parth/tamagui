@@ -50,6 +50,8 @@ import { seasons } from '~/features/site/seasons/SeasonToggleButton'
 import { ThemeNameEffect } from '~/features/site/theme/ThemeNameEffect'
 import { TakeoutLogo } from '~/features/takeout/TakeoutLogo'
 import { LoadCherryBomb, LoadMunro } from '~/features/site/fonts/LoadFonts'
+import { Sticksy } from '~/helpers/sticksy'
+import { HeadInfo } from '~/components/HeadInfo'
 
 export const loader = async () => {
   try {
@@ -71,24 +73,18 @@ export default function TakeoutPage() {
       <LoadCherryBomb />
       <LoadMunro />
       <script src="https://cdn.paritydeals.com/banner.js" />
-
-      {/* TODO */}
-      {/* <NextSeo
-          title="🥡 Tamagui Takeout"
-          description="Tamagui Takeout React Native Bootstrap Starter Kit"
-          openGraph={{
-            type: 'website',
-            locale: 'en_US',
-            url: 'https://tamagui.dev/takeout',
-            siteName: 'Tamagui',
-            images: [
-              {
-                url: 'https://tamagui.dev/takeout/social.png',
-              },
-            ],
-          }}
-        />
-         */}
+      <HeadInfo
+        title="🥡 Tamagui Takeout"
+        description="Tamagui Takeout React Native Bootstrap Starter Kit"
+        openGraph={{
+          url: 'https://tamagui.dev/takeout',
+          images: [
+            {
+              url: 'https://tamagui.dev/takeout/social.png',
+            },
+          ],
+        }}
+      />
 
       <YStack
         pos="absolute"
@@ -1161,19 +1157,12 @@ const StarterCard = memo(({ product }: { product: TakeoutPageProps['starter'] })
       return
     }
 
-    let dispose = () => {}
-
+    new Sticksy(ref as any)
     // TODO build is eagerly loading this despite this not logging
-    console.log('loading ', isClient)
-    // import('../../helpers/sticksy').then(({ Sticksy }) => {
-    //   new Sticksy(ref as any)
 
-    //   dispose = () => {
-    //     Sticksy.disableAll()
-    //   }
-    // })
-
-    return dispose
+    return () => {
+      Sticksy.disableAll()
+    }
   }, [ref, media.md])
 
   const { name } = useTint()
